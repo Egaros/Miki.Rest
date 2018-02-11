@@ -14,7 +14,7 @@ namespace Rest
         private HttpClient client;
 		private List<Func<List<object>, Task>> preProcessors = new List<Func<List<object>, Task>>();
 		private List<Func<HttpResponseMessage, List<object>, Task>> postProcessors = new List<Func<HttpResponseMessage, List<object>, Task>>();
-
+		
         public RestClient(string base_address)
         {
             client = new HttpClient();
@@ -26,11 +26,13 @@ namespace Rest
             client.DefaultRequestHeaders.Add(name, value);
             return this;
         }
+
 		public RestClient AddPreprocessor(Func<List<object>, Task> func)
 		{
 			preProcessors.Add(func);
 			return this;
 		}
+
 		public RestClient AddPostprocessor(Func<HttpResponseMessage, List<object>, Task> func)
 		{
 			postProcessors.Add(func);
@@ -48,7 +50,8 @@ namespace Rest
 			HttpResponseMessage response = await client.GetAsync(url, HttpCompletionOption.ResponseContentRead);
             RestResponse<string> r = new RestResponse<string>();
             r.Success = response.IsSuccessStatusCode;
-            r.Data = await response.Content.ReadAsStringAsync();
+            r.Body = await response.Content.ReadAsStringAsync();
+			r.Data = r.Body;
             return r;
         }
 
@@ -57,19 +60,22 @@ namespace Rest
 			HttpResponseMessage response = await client.GetAsync(url, HttpCompletionOption.ResponseContentRead);
             RestResponse<T> r = new RestResponse<T>();
             r.Success = response.IsSuccessStatusCode;
-            string output = await response.Content.ReadAsStringAsync();
-            r.Data = JsonConvert.DeserializeObject<T>(output);
+            r.Body = await response.Content.ReadAsStringAsync();
+            r.Data = JsonConvert.DeserializeObject<T>(r.Body);
             return r;
         }
 		
         public async Task<RestResponse<T>> PostAsync<T>(string url, string value)
         {
             HttpResponseMessage response = await client.PostAsync(url, new StringContent(value, Encoding.UTF8, "application/json"));
-            RestResponse<T> r = new RestResponse<T>();
+
+			RestResponse<T> r = new RestResponse<T>();
 			r.httpResponseMessage = response;
             r.Success = response.IsSuccessStatusCode;
-            r.Data = JsonConvert.DeserializeObject<T>(await response.Content.ReadAsStringAsync());
-            return r;
+			r.Body = await response.Content.ReadAsStringAsync();
+			r.Data = JsonConvert.DeserializeObject<T>(r.Body);
+
+			return r;
         }
 
 		public async Task<RestResponse<T>> PostAsync<T>(string url)
@@ -80,28 +86,23 @@ namespace Rest
 			await RunPostProcessorsAsync(arguments, response);
 			RestResponse<T> r = new RestResponse<T>();
 			r.Success = response.IsSuccessStatusCode;
-			string output = await response.Content.ReadAsStringAsync();
-			r.Data = JsonConvert.DeserializeObject<T>(output);
+			r.Body = await response.Content.ReadAsStringAsync();
+			r.Data = JsonConvert.DeserializeObject<T>(r.Body);
 			return r;
 		}
 
 		public async Task<RestResponse<T>> PatchAsync<T>(string url, string value)
 		{
-			var method = new HttpMethod("PATCH");
-			var request = new HttpRequestMessage(method, url)
+			HttpMethod method = new HttpMethod("PATCH");
+			HttpRequestMessage request = new HttpRequestMessage(method, url)
 			{
 				Content = new StringContent(value, Encoding.UTF8, "application/json")
 			};
 
-			var response = default(HttpResponseMessage); 
-			// In case you want to set a timeout
-																	//CancellationToken cancellationToken = new CancellationTokenSource(60).Token;
-
+			HttpResponseMessage response = default(HttpResponseMessage); 
 			try
 			{
 				response = await client.SendAsync(request);
-				// If you want to use the timeout you set
-				//response = await client.SendRequestAsync(request).AsTask(cancellationToken);
 			}
 			catch (TaskCanceledException e)
 			{
@@ -115,7 +116,7 @@ namespace Rest
 			return r;
 		}
 
-		// Todo: check if it actually works?
+		// TODO: check if it actually works?
 		public async Task<RestResponse<string>> PostMultipartAsync(params MultiformItem[] items)
 		{
 			using (var content =  new MultipartFormDataContent("Upload----" + DateTime.Now.ToString(CultureInfo.InvariantCulture)))
@@ -164,11 +165,4 @@ namespace Rest
 		public string Name { get; set; }
 		public string FileName { get; set; } = null;
 	}
-
-    public enum RestReturnType
-    {
-        NONE,
-        JSON,
-        XML
-    }
 }

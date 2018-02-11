@@ -12,7 +12,8 @@
     <PackageTags>rest miki bot client</PackageTags>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <Company />
-    <Version>1.1.0</Version>
+    <Version>1.2.0</Version>
+    <PackageReleaseNotes>Add: Body variable for debugging purposes.</PackageReleaseNotes>
   </PropertyGroup>
 
   <ItemGroup>
