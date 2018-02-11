@@ -7,37 +7,25 @@ using System.Net.Http.Headers;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Rest
+namespace Miki.Rest
 {
+	// TODO: redo this entire client
     public class RestClient
     {
         private HttpClient client;
-		private List<Func<List<object>, Task>> preProcessors = new List<Func<List<object>, Task>>();
-		private List<Func<HttpResponseMessage, List<object>, Task>> postProcessors = new List<Func<HttpResponseMessage, List<object>, Task>>();
-		
+
         public RestClient(string base_address)
         {
             client = new HttpClient();
 			client.BaseAddress = new Uri(base_address);
 		}
 
+		// TODO: remove or rework this
         public RestClient AddHeader(string name, string value)
         {
             client.DefaultRequestHeaders.Add(name, value);
             return this;
         }
-
-		public RestClient AddPreprocessor(Func<List<object>, Task> func)
-		{
-			preProcessors.Add(func);
-			return this;
-		}
-
-		public RestClient AddPostprocessor(Func<HttpResponseMessage, List<object>, Task> func)
-		{
-			postProcessors.Add(func);
-			return this;
-		}
 
 		public RestClient SetAuthorisation(string scheme, string value)
         {
@@ -70,7 +58,7 @@ namespace Rest
             HttpResponseMessage response = await client.PostAsync(url, new StringContent(value, Encoding.UTF8, "application/json"));
 
 			RestResponse<T> r = new RestResponse<T>();
-			r.httpResponseMessage = response;
+			r.HttpResponseMessage = response;
             r.Success = response.IsSuccessStatusCode;
 			r.Body = await response.Content.ReadAsStringAsync();
 			r.Data = JsonConvert.DeserializeObject<T>(r.Body);
@@ -81,9 +69,7 @@ namespace Rest
 		public async Task<RestResponse<T>> PostAsync<T>(string url)
 		{
 			List<object> arguments = new List<object>();
-			await RunPreprocessorsAsync(arguments);
 			HttpResponseMessage response = await client.PostAsync(url, null);
-			await RunPostProcessorsAsync(arguments, response);
 			RestResponse<T> r = new RestResponse<T>();
 			r.Success = response.IsSuccessStatusCode;
 			r.Body = await response.Content.ReadAsStringAsync();
@@ -110,7 +96,7 @@ namespace Rest
 			}
 
 			RestResponse<T> r = new RestResponse<T>();
-			r.httpResponseMessage = response;
+			r.HttpResponseMessage = response;
 			r.Success = response.IsSuccessStatusCode;
 			r.Data = JsonConvert.DeserializeObject<T>(await response.Content.ReadAsStringAsync());
 			return r;
@@ -119,7 +105,7 @@ namespace Rest
 		// TODO: check if it actually works?
 		public async Task<RestResponse<string>> PostMultipartAsync(params MultiformItem[] items)
 		{
-			using (var content =  new MultipartFormDataContent("Upload----" + DateTime.Now.ToString(CultureInfo.InvariantCulture)))
+			using (var content =  new MultipartFormDataContent("Upload----" + DateTime.Now.ToString(CultureInfo.InvarMiki.FrameworkntCulture)))
 			{
 				for (int i = 0; i < items.Length; i++)
 				{
@@ -136,25 +122,9 @@ namespace Rest
 					var input = await message.Content.ReadAsStringAsync();
 					RestResponse<string> response = new RestResponse<string>();
 					response.Data = input;
-					response.httpResponseMessage = message;
+					response.HttpResponseMessage = message;
 					return response;
 				}
-			}
-		}
-
-		private async Task RunPostProcessorsAsync(List<object> arguments, HttpResponseMessage response)
-		{
-			foreach (var proc in postProcessors)
-			{
-				await proc(response, arguments);
-			}
-		}
-
-		private async Task RunPreprocessorsAsync(List<object> objects)
-		{
-			foreach(var proc in preProcessors)
-			{
-				await proc(objects);
 			}
 		}
     }

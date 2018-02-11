@@ -5,15 +5,16 @@
     <Authors>Velddev</Authors>
     <Description>Simple small rest client</Description>
     <Copyright>Mike Veldsink, 2018</Copyright>
-    <PackageProjectUrl>https://github.com/velddev/rest</PackageProjectUrl>
-    <AssemblyVersion>1.1.0.0</AssemblyVersion>
-    <FileVersion>1.1.0.0</FileVersion>
-    <RepositoryUrl>https://github.com/velddev/rest</RepositoryUrl>
+    <PackageProjectUrl>https://github.com/Mikibot/Miki.Rest</PackageProjectUrl>
+    <AssemblyVersion>1.2.1.0</AssemblyVersion>
+    <FileVersion>1.2.1.0</FileVersion>
+    <RepositoryUrl>https://github.com/Mikibot/Miki.Rest</RepositoryUrl>
     <PackageTags>rest miki bot client</PackageTags>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <Company />
-    <Version>1.2.0</Version>
-    <PackageReleaseNotes>Add: Body variable for debugging purposes.</PackageReleaseNotes>
+    <Version>1.2.1</Version>
+    <PackageReleaseNotes>Remove: pre/postprocessors until there's a better solution</PackageReleaseNotes>
+    <NeutralLanguage>en</NeutralLanguage>
   </PropertyGroup>
 
   <ItemGroup>
