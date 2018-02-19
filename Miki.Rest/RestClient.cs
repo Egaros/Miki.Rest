@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.IO;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
@@ -41,18 +42,23 @@ namespace Miki.Rest
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(scheme, value);
             return this;
         }
-				
-        public async Task<RestResponse<string>> GetAsync(string url)
+		
+		public async Task<Stream> GetStreamAsync(string url)
+		{
+			var response = await GetResponseAsync(url);
+			return await response.Content.ReadAsStreamAsync();
+		}
+
+        public async Task<RestResponse> GetAsync(string url)
         {
 			url = url.TrimStart('/');
-			HttpResponseMessage response = await client.GetAsync(url, HttpCompletionOption.ResponseContentRead);
-            RestResponse<string> r = new RestResponse<string>();
+			HttpResponseMessage response = await GetResponseAsync(url);
+
+			RestResponse r = new RestResponse();
             r.Success = response.IsSuccessStatusCode;
             r.Body = await response.Content.ReadAsStringAsync();
-			r.Data = r.Body;
             return r;
         }
-
 		public async Task<RestResponse<T>> GetAsync<T>(string url)
 		{
 			url = url.TrimStart('/');
@@ -84,7 +90,6 @@ namespace Miki.Rest
 			response.Data = JsonConvert.DeserializeObject<T>(response.Body);
 			return response;
 		}
-
 		public async Task<RestResponse<T>> PostAsync<T>(string url)
 		{
 			url = url.TrimStart('/');
@@ -150,6 +155,9 @@ namespace Miki.Rest
 				}
 			}
 		}
+
+		private async Task<HttpResponseMessage> GetResponseAsync(string url)
+			=> await client.GetAsync(url, HttpCompletionOption.ResponseContentRead);
 
 		public void Dispose()
 		{

@@ -12,8 +12,8 @@
     <PackageTags>rest miki bot client</PackageTags>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <Company />
-    <Version>1.2.2</Version>
-    <PackageReleaseNotes>Fix: base adress issues</PackageReleaseNotes>
+    <Version>1.3</Version>
+    <PackageReleaseNotes>Add: GetStreamAsync</PackageReleaseNotes>
     <NeutralLanguage>en</NeutralLanguage>
   </PropertyGroup>
 
